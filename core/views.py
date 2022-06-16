@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+from django.http import JsonResponse
 from django.http.response import Http404
 from django.shortcuts import redirect, render
 from core.models import Evento
@@ -38,6 +39,14 @@ def lista_eventos(request):
                                     data_evento__gt=data_atual)
     dados = {'eventos':evento}
     return render(request, 'agenda.html', dados)
+
+def historico_eventos(request):
+    usuario = request.user
+    data_atual = datetime.now() - timedelta(hours=1)
+    evento = Evento.objects.filter(usuario=usuario,
+                                    data_evento__lt=data_atual)
+    dados = {'eventos':evento}
+    return render(request, 'historico.html', dados)
 
 # Funcao que retorna os detalhes de cada evento
 @login_required(login_url='/login/')
@@ -85,3 +94,9 @@ def delete_evento(request, id_evento):
     else:
         raise Http404()
     return redirect('/')
+
+@login_required(login_url='/login/')
+def json_lista_evento(request):
+    usuario = request.user
+    evento = Evento.objects.filter(usuario=usuario).values('id', 'titulo')
+    return JsonResponse(list(evento), safe=False)
